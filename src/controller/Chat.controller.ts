@@ -23,9 +23,6 @@ export class ChatController {
         
         const threadId = String(req?.user?._id);
         
-        console.log('====================================');
-        console.log("Request came", threadId);
-        console.log('====================================');
         const data = await graphWorkflow.invoke(
             {
                 messages: [new HumanMessage(userMessage)],
@@ -34,11 +31,24 @@ export class ChatController {
             configurable: { thread_id: threadId },
         },
       );
-      const aiResponse = data?.messages?.at(
-        data?.messages?.length - 1,
-      )?.content;
-      return ResponseEntity(res, 200, "Ai message", {
-        message: aiResponse,
+
+      const messages = data.messages.map((message) => {
+        const type = message.getType();
+
+        return {
+          id: message.id,
+          role:
+            type === "human"
+              ? "user"
+              : type === "ai"
+                ? "assistant"
+                : type,
+          content: message.content,
+        };
+      });
+
+      return ResponseEntity(res, 200, "Chat messages fetched successfully", {
+        messages,
       });
     } catch (error) {
       next(error);
