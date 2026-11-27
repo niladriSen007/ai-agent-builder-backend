@@ -7,5 +7,6 @@ const MONGO_URI = process.env.MONGO_URI || "mongodb://localhost:27017/mydatabase
 const JWT_SECRET =
   process.env.JWT_SECRET ||
   "kdjfvkdjnvhdvdkjvjklsdvfhlsdkjfhvdslkfvhdlsfhvlsdkjfhvldijfhvieurhfeiruhfeiruhfeirhfelrfherliuhf";
+const GROQ_API_KEY = process.env.GROQ_API_KEY;
 
 export { PORT,MONGO_URI ,JWT_SECRET};

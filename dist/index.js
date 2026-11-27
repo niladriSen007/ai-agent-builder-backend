@@ -298,12 +298,14 @@ var AuthController = class {
   logout = async (req, res, next) => {
     try {
       this.authService.logout(req, res);
-      return ResponseEntity(res, 200, "User logged out successfully", null);
+      return ResponseEntity(res, 200, "User logged out successfully", {
+        logout: true
+      });
     } catch (error) {
       next(error);
     }
   };
-  me = async (req, res, next) => {
+  myDetails = async (req, res, next) => {
     try {
       const user = req?.user;
       return ResponseEntity(
@@ -334,7 +336,20 @@ var RouteProtector = async (req, res, next) => {
     if (!user) {
       throw new NotFoundException("User not found");
     }
-    req.user = user;
+    const access_token = jwt3.sign(
+      {
+        userId: user?._id
+      },
+      JWT_SECRET,
+      {
+        expiresIn: "7d"
+      }
+    );
+    const userData = {
+      ...user?._doc,
+      accessToken: access_token
+    };
+    req.user = userData;
     next();
   } catch (error) {
     throw new ApiError(401, "Unauthorized");
@@ -349,7 +364,7 @@ var authController = new AuthController(authService);
 authRouter.post("/login", authController.login);
 authRouter.post("/refresh-token", authController.refreshToken);
 authRouter.post("/logout", authController.logout);
-authRouter.get("/myDetails", RouteProtector, authController.me);
+authRouter.get("/myDetails", RouteProtector, authController.myDetails);
 
 // src/app.ts
 import cors from "cors";
@@ -372,6 +387,173 @@ var GlobalErrorHandler = (err, req, res, next) => {
   return res.status(statusCode).json(response2);
 };
 
+// src/routes/Agent.routes.ts
+import { Router as Router2 } from "express";
+
+// src/controller/Agent.controller.ts
+var AgentController = class {
+  constructor(agentService2) {
+    this.agentService = agentService2;
+  }
+  agentService;
+  getAgents = async (req, res, next) => {
+    try {
+      if (!req.user) {
+        throw new ApiError(401, "Unauthorized");
+      }
+      const agents = await this.agentService.getAgents(req.user._id);
+      return ResponseEntity(res, 200, "Agents fetched successfully", agents);
+    } catch (error) {
+      next(error);
+    }
+  };
+  createAgent = async (req, res, next) => {
+    try {
+      if (!req.user) {
+        throw new ApiError(401, "Unauthorized");
+      }
+      const agent = await this.agentService.createAgent(
+        req.user._id,
+        req.body
+      );
+      return ResponseEntity(res, 201, "Agent created successfully", agent);
+    } catch (error) {
+      next(error);
+    }
+  };
+  patchAgent = async (req, res, next) => {
+    try {
+      if (!req.user) {
+        throw new ApiError(401, "Unauthorized");
+      }
+      const agent = await this.agentService.patchAgent(
+        req.user._id,
+        req.params.agentId,
+        req.body
+      );
+      return ResponseEntity(res, 200, "Agent updated successfully", agent);
+    } catch (error) {
+      next(error);
+    }
+  };
+};
+
+// src/entity/Agent.model.ts
+import {
+  model as model2,
+  Schema as Schema2
+} from "mongoose";
+var agentSchema = new Schema2(
+  {
+    ownerId: {
+      type: Schema2.Types.ObjectId,
+      ref: "User",
+      required: true
+    },
+    name: {
+      type: String,
+      required: true,
+      trim: true
+    },
+    knowledgeBase: {
+      type: String,
+      required: true
+    },
+    instructions: {
+      type: String,
+      required: true
+    },
+    tools: [
+      {
+        type: String
+      }
+    ],
+    isActive: {
+      type: Boolean,
+      default: true
+    }
+  },
+  { timestamps: true }
+);
+var AgentEntity = model2("Agent", agentSchema);
+
+// src/repository/Agent.repository.ts
+var AgentRepository = class {
+  async findByOwner(ownerId) {
+    return AgentEntity.find({ ownerId }).sort({ createdAt: -1 });
+  }
+  async create(ownerId, agent) {
+    return AgentEntity.create({ ...agent, ownerId });
+  }
+  async update(ownerId, agentId, updates) {
+    return AgentEntity.findOneAndUpdate(
+      { _id: agentId, ownerId },
+      { $set: updates },
+      { new: true, runValidators: true }
+    );
+  }
+};
+
+// src/services/Agent.services.ts
+import { Types } from "mongoose";
+var AgentService = class {
+  constructor(agentRepository2) {
+    this.agentRepository = agentRepository2;
+  }
+  agentRepository;
+  async getAgents(ownerId) {
+    return this.agentRepository.findByOwner(ownerId);
+  }
+  async createAgent(ownerId, agent) {
+    this.validateAgentFields(agent, true);
+    return this.agentRepository.create(ownerId, agent);
+  }
+  async patchAgent(ownerId, agentId, updates) {
+    if (!Types.ObjectId.isValid(agentId)) {
+      throw new ApiError(400, "Invalid agent ID");
+    }
+    const allowedFields = /* @__PURE__ */ new Set([
+      "name",
+      "knowledgeBase",
+      "instructions",
+      "tools",
+      "isActive"
+    ]);
+    if (!updates || typeof updates !== "object" || Object.keys(updates).length === 0 || Object.keys(updates).some((field) => !allowedFields.has(field))) {
+      throw new ApiError(400, "At least one valid agent field is required");
+    }
+    this.validateAgentFields(updates, false);
+    const agent = await this.agentRepository.update(ownerId, agentId, updates);
+    if (!agent) {
+      throw new NotFoundException("Agent not found");
+    }
+    return agent;
+  }
+  validateAgentFields(agent, requireAll) {
+    for (const field of ["name", "knowledgeBase", "instructions"]) {
+      const value = agent[field];
+      if ((requireAll || value !== void 0) && (typeof value !== "string" || value.trim().length === 0)) {
+        throw new ApiError(400, `${field} must be a non-empty string`);
+      }
+    }
+    if (agent.tools !== void 0 && (!Array.isArray(agent.tools) || !agent.tools.every((tool) => typeof tool === "string"))) {
+      throw new ApiError(400, "tools must be an array of strings");
+    }
+    if (agent.isActive !== void 0 && typeof agent.isActive !== "boolean") {
+      throw new ApiError(400, "isActive must be a boolean");
+    }
+  }
+};
+
+// src/routes/Agent.routes.ts
+var agentRouter = Router2();
+var agentRepository = new AgentRepository();
+var agentService = new AgentService(agentRepository);
+var agentController = new AgentController(agentService);
+agentRouter.get("/", RouteProtector, agentController.getAgents);
+agentRouter.post("/", RouteProtector, agentController.createAgent);
+agentRouter.patch("/:agentId", RouteProtector, agentController.patchAgent);
+
 // src/app.ts
 var app = express();
 app.use(express.json());
@@ -383,6 +565,7 @@ app.use(
 );
 app.use(cookieParser());
 app.use("/api/v1/auth", authRouter);
+app.use("/api/v1/agents", agentRouter);
 app.use(GlobalErrorHandler);
 
 // src/index.ts

@@ -53,13 +53,19 @@ export class AuthController {
   logout = async (req: Request, res: Response, next: NextFunction) => {
     try {
       this.authService.logout(req, res);
-      return ResponseEntity(res, 200, "User logged out successfully", null);
+      return ResponseEntity(res, 200, "User logged out successfully", {
+        logout: true,
+      });
     } catch (error) {
       next(error);
     }
   };
 
-  myDetails = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+  myDetails = async (
+    req: AuthenticatedRequest,
+    res: Response,
+    next: NextFunction,
+  ) => {
     try {
       const user = req?.user;
       return ResponseEntity(

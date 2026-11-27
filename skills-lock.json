@@ -1,0 +1,47 @@
+{
+  "version": 2,
+  "skills": {
+    "langchain-agent-experiments": {
+      "source": "langchain-ai/langchain-skills",
+      "commit": "9002566fcf20fb3df65f42da4d316f5643f71c9e",
+      "sourceType": "github",
+      "skillPath": "skills/langchain-agent-experiments/SKILL.md",
+      "computedHash": "81f7cc16599b82ee899ad4b81bced556ab3b3d2555057f27736790b18efbad0e"
+    },
+    "langchain-agent-monitoring": {
+      "source": "langchain-ai/langchain-skills",
+      "commit": "9002566fcf20fb3df65f42da4d316f5643f71c9e",
+      "sourceType": "github",
+      "skillPath": "skills/langchain-agent-monitoring/SKILL.md",
+      "computedHash": "9f887ed59f25bf74b770148ed6988e9f2b4734c5550726242cc98cc90cfe66b8"
+    },
+    "langchain-agent-tracing": {
+      "source": "langchain-ai/langchain-skills",
+      "commit": "9002566fcf20fb3df65f42da4d316f5643f71c9e",
+      "sourceType": "github",
+      "skillPath": "skills/langchain-agent-tracing/SKILL.md",
+      "computedHash": "e42fc8881d73c1384d9b44264e367dbd1a3f63faa60ded268998372d78293573"
+    },
+    "langchain-build-agent": {
+      "source": "langchain-ai/langchain-skills",
+      "commit": "9002566fcf20fb3df65f42da4d316f5643f71c9e",
+      "sourceType": "github",
+      "skillPath": "skills/langchain-build-agent/SKILL.md",
+      "computedHash": "b3b13a326cb6ee154a1aec7117153e8df920fec6fc6731a3be841fd97f065c04"
+    },
+    "langchain-eval-engineering": {
+      "source": "langchain-ai/langchain-skills",
+      "commit": "9002566fcf20fb3df65f42da4d316f5643f71c9e",
+      "sourceType": "github",
+      "skillPath": "skills/langchain-eval-engineering/SKILL.md",
+      "computedHash": "6375fd644d36f7cd4b894fc83183baca731969221be1ed101cc111f3a10c6e6c"
+    },
+    "langchain-managed-deep-agents": {
+      "source": "langchain-ai/langchain-skills",
+      "commit": "9002566fcf20fb3df65f42da4d316f5643f71c9e",
+      "sourceType": "github",
+      "skillPath": "skills/langchain-managed-deep-agents/SKILL.md",
+      "computedHash": "9b3ced35a71778bb7b9e8f7edeee772233f80dc09d3bdf737b8a37f06860e45a"
+    }
+  }
+}
